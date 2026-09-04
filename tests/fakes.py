@@ -1,6 +1,13 @@
+from collections import Counter
+
 import yt_dlp
 
-FAIL_URLS = set()
+class _CountingFailURLs(Counter):
+    def add(self, url):
+        self[url] += 1
+
+
+FAIL_URLS = _CountingFailURLs()
 GATES = {}
 
 
@@ -21,8 +28,8 @@ class FakeYDL:
 
     def download(self, urls):
         url = urls[0]
-        if url in FAIL_URLS:
-            FAIL_URLS.discard(url)
+        if FAIL_URLS[url] > 0:
+            FAIL_URLS[url] -= 1
             raise yt_dlp.utils.DownloadError("HTTP Error 403")
         gate = GATES.get(url)
         for hook in self.opts.get("progress_hooks", []):

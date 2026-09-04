@@ -56,6 +56,34 @@ class DownloadManager:
         with self._lock:
             return any(t.status in self.ACTIVE for t in self.tasks.values())
 
+    def pause_task(self, task_id: str):
+        self._cancel[task_id].set()
+
+    def resume_task(self, task_id: str):
+        task = self.tasks[task_id]
+        if task.status is not TaskStatus.CANCELLED:
+            return
+        self._cancel[task_id].clear()
+        self._reset(task)
+        self._q.put(task_id)
+
+    def cancel_task(self, task_id: str):
+        self._cancel[task_id].set()
+
+    def retry_task(self, task_id: str):
+        task = self.tasks[task_id]
+        if task.status not in (TaskStatus.ERROR, TaskStatus.CANCELLED):
+            return
+        self._cancel[task_id].clear()
+        self._retried.discard(task_id)
+        task.error = ""
+        self._reset(task)
+        self._q.put(task_id)
+
+    def submit_playlist_selection(self, task_id: str, entries: list[int]):
+        self._selection[task_id] = list(entries or [])
+        self._choice[task_id].set()
+
     def _worker(self):
         while True:
             try:

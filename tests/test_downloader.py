@@ -1,9 +1,10 @@
+import threading
 import time
 
 from backend.config import Config, DEFAULTS
 from backend.downloader import DownloadManager
 from backend.models import TaskStatus
-from fakes import FakeYDL
+from fakes import FAIL_URLS, GATES, FakeYDL
 
 
 def wait_until(cond, timeout=3.0):
@@ -71,3 +72,76 @@ def test_persistence_reload(tmp_path):
                          tasks_file=tmp_path / "tasks.json", max_workers=1)
     titles = [t["title"] for t in m2.get_task_list()]
     assert "测试视频" in titles
+
+
+def test_pause_during_download(tmp_path):
+    gate = threading.Event()
+    GATES["https://example.com/v1"] = gate
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DOWNLOADING)
+    m.pause_task(tid)
+    gate.set()
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.CANCELLED)
+
+
+def test_resume_after_pause(tmp_path):
+    gate = threading.Event()
+    GATES["https://example.com/v1"] = gate
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DOWNLOADING)
+    m.pause_task(tid)
+    gate.set()
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.CANCELLED)
+    m.resume_task(tid)
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+
+
+def test_cancel_queued_task(tmp_path):
+    gate = threading.Event()
+    GATES["https://example.com/v1"] = gate
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    m.cancel_task(tid)
+    gate.set()
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.CANCELLED)
+
+
+def test_auto_retry_on_transient_error(tmp_path):
+    FAIL_URLS.add("https://example.com/v1")
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+
+
+def test_manual_retry_after_error(tmp_path):
+    FAIL_URLS.add("https://example.com/v1")
+    FAIL_URLS.add("https://example.com/v1")
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.ERROR)
+    assert m.tasks[tid].error
+    FAIL_URLS.add("https://example.com/v1")
+    FAIL_URLS.add("https://example.com/v1")
+    m.retry_task(tid)
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.ERROR)
+    assert m.tasks[tid].error
+
+
+def test_playlist_waiting_and_selection(tmp_path):
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/playlist")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.WAITING)
+    m.submit_playlist_selection(tid, [2])
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert dl_opts[-1]["playlist_items"] == "2"
+
+
+def test_playlist_cancel_while_waiting(tmp_path):
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/playlist")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.WAITING)
+    m.cancel_task(tid)
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.CANCELLED)
