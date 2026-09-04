@@ -66,3 +66,18 @@ def test_download_extracts_and_saves(tmp_path, monkeypatch):
     assert not (tmp_path / "bin" / "ffmpeg.zip").exists()
     assert 100.0 in percents
     assert cfg.get("ffmpeg_path") == out
+
+def test_bin_dir_frozen_next_to_exe(monkeypatch, tmp_path):
+    import sys
+    exe = tmp_path / "app" / "yt-dlp下载器.exe"
+    exe.parent.mkdir()
+    exe.write_bytes(b"x")
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(exe))
+    assert fm._bin_dir() == tmp_path / "app" / "bin"
+
+
+def test_bin_dir_source_layout(monkeypatch):
+    import sys
+    monkeypatch.setattr(sys, "frozen", False, raising=False)
+    assert fm._bin_dir() == fm.BIN_DIR

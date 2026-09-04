@@ -12,7 +12,13 @@ from backend.config import Config
 from backend.downloader import DownloadManager
 
 ROOT = Path(__file__).resolve().parent
-DIST = ROOT / "dist" / "index.html"
+
+
+def bundle_dir() -> Path:
+    return Path(getattr(sys, "_MEIPASS", ROOT))
+
+
+DIST = bundle_dir() / "dist" / "index.html"
 
 
 class LateWindow:

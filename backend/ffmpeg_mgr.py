@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -11,19 +12,26 @@ FFMPEG_URL = ("https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/"
               "ffmpeg-master-latest-win64-gpl.zip")
 
 
+def _bin_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "bin"
+    return BIN_DIR
+
+
 def find_ffmpeg(config) -> str | None:
     configured = config.get("ffmpeg_path")
     if configured and Path(configured).exists():
         return configured
-    local = BIN_DIR / "ffmpeg.exe"
+    local = _bin_dir() / "ffmpeg.exe"
     if local.exists():
         return str(local)
     return shutil.which("ffmpeg")
 
 
 def download_ffmpeg(config, progress_cb=None) -> str:
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
-    zip_path = BIN_DIR / "ffmpeg.zip"
+    bin_dir = _bin_dir()
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    zip_path = bin_dir / "ffmpeg.zip"
 
     def report(count, block, total):
         if total and progress_cb:
@@ -34,7 +42,7 @@ def download_ffmpeg(config, progress_cb=None) -> str:
         for name in z.namelist():
             base = Path(name).name
             if base in ("ffmpeg.exe", "ffprobe.exe"):
-                (BIN_DIR / base).write_bytes(z.read(name))
+                (bin_dir / base).write_bytes(z.read(name))
     zip_path.unlink()
-    config.set("ffmpeg_path", str(BIN_DIR / "ffmpeg.exe"))
-    return str(BIN_DIR / "ffmpeg.exe")
+    config.set("ffmpeg_path", str(bin_dir / "ffmpeg.exe"))
+    return str(bin_dir / "ffmpeg.exe")

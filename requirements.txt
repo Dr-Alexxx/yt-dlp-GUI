@@ -1,3 +1,4 @@
 pywebview>=5.1
 yt-dlp>=2024.12.13
 pytest>=8.3
+pyinstaller>=6.10
