@@ -5,6 +5,7 @@ import {
   NMenu, NMessageProvider, darkTheme, zhCN, dateZhCN,
 } from 'naive-ui'
 import TasksView from './views/TasksView.vue'
+import SettingsView from './views/SettingsView.vue'
 import FfmpegBanner from './components/FfmpegBanner.vue'
 import { store, initStore } from './store'
 
@@ -25,6 +26,7 @@ onMounted(initStore)
         <n-layout-content content-style="padding: 16px">
           <FfmpegBanner />
           <TasksView v-if="store.view === 'tasks'" />
+          <SettingsView v-else />
         </n-layout-content>
       </n-layout>
     </n-message-provider>
