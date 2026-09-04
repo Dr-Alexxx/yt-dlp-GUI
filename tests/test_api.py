@@ -118,3 +118,32 @@ def test_check_ffmpeg(monkeypatch):
     monkeypatch.setattr(api_mod, "find_ffmpeg", lambda cfg: "C:/bin/ffmpeg.exe")
     api, _ = make_api()
     assert api.check_ffmpeg() == {"ok": True, "path": "C:/bin/ffmpeg.exe"}
+
+
+def test_file_pickers_guard_without_window():
+    api, _ = make_api()
+    assert api.pick_cookie_file()["ok"] is False
+    assert api.pick_download_dir()["ok"] is False
+
+
+def test_file_pickers_use_window_dialog(monkeypatch):
+    import backend.api as api_mod
+
+    calls = []
+
+    class FakeWindow:
+        def create_file_dialog(self, dialog_type, allow_multiple=False, file_types=None):
+            calls.append(dialog_type)
+            if dialog_type == "OPEN_DIALOG":
+                return ("C:/cookies.txt",)
+            return ("C:/Downloads",)
+
+    api_obj, _ = make_api()
+    api_obj._holder = type("H", (), {"window": FakeWindow()})()
+    monkeypatch.setattr(api_mod.webview, "OPEN_DIALOG", "OPEN_DIALOG", raising=False)
+    monkeypatch.setattr(api_mod.webview, "FOLDER_DIALOG", "FOLDER_DIALOG", raising=False)
+    r1 = api_obj.pick_cookie_file()
+    r2 = api_obj.pick_download_dir()
+    assert r1 == {"ok": True, "path": "C:/cookies.txt"}
+    assert r2 == {"ok": True, "path": "C:/Downloads"}
+    assert calls == ["OPEN_DIALOG", "FOLDER_DIALOG"]

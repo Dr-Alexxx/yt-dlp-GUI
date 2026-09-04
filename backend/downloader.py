@@ -10,6 +10,7 @@ from pathlib import Path
 import yt_dlp
 
 from .config import TASKS_FILE
+from .cookies import resolve_cookie_file
 from .ffmpeg_mgr import find_ffmpeg
 from .errors import humanize_error, is_cookie_db_error
 from .models import Task, TaskStatus
@@ -173,7 +174,10 @@ class DownloadManager:
         if task is not None and task.id in self._cookie_fallback:
             pass
         elif cookie_file:
-            opts["cookiefile"] = cookie_file
+            opts["cookiefile"] = resolve_cookie_file(
+                cookie_file,
+                self.config.get("cookie_file_format") or "netscape",
+                task.url if task is not None else "")
         elif cookies_browser:
             opts["cookiesfrombrowser"] = (cookies_browser,)
         langs = self.config.get("subtitle_langs")

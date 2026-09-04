@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import threading
 
+import webview
 import yt_dlp
 
 from .errors import humanize_error
 from .ffmpeg_mgr import download_ffmpeg, find_ffmpeg
 
-CONFIG_KEYS = {"download_dir", "cookie_file", "cookies_browser",
-               "ffmpeg_path", "max_concurrent", "subtitle_langs"}
+CONFIG_KEYS = {"download_dir", "cookie_file", "cookie_file_format",
+               "cookies_browser", "ffmpeg_path", "max_concurrent",
+               "subtitle_langs"}
 
 
 def _valid_url(url: str) -> bool:
@@ -16,11 +18,29 @@ def _valid_url(url: str) -> bool:
 
 
 class JsApi:
-    def __init__(self, manager, config, push_event):
+    def __init__(self, manager, config, push_event, dialog_holder=None):
         self.manager = manager
         self.config = config
         self._push = push_event
+        self._holder = dialog_holder
         self._ffmpeg_dl_lock = threading.Lock()
+
+    def _pick(self, dialog_type, file_types=None):
+        window = getattr(self._holder, "window", None) if self._holder else None
+        if window is None:
+            return {"ok": False, "error": "窗口未就绪"}
+        result = window.create_file_dialog(dialog_type, allow_multiple=False,
+                                           file_types=file_types)
+        if not result:
+            return {"ok": True, "path": ""}
+        return {"ok": True, "path": result[0]}
+
+    def pick_cookie_file(self):
+        return self._pick(webview.OPEN_DIALOG,
+                          ("Cookie 文件 (*.txt;*.json)", "*.*"))
+
+    def pick_download_dir(self):
+        return self._pick(webview.FOLDER_DIALOG)
 
     def add_task(self, url, options=None):
         url = (url or "").strip() if isinstance(url, str) else ""

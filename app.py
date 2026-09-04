@@ -48,7 +48,7 @@ def main():
     push = make_push(holder)
     config = Config()
     manager = DownloadManager(config, push)
-    api = JsApi(manager, config, push)
+    api = JsApi(manager, config, push, dialog_holder=holder)
     window = webview.create_window("yt-dlp 下载器", url, js_api=api,
                                    width=1100, height=750)
     holder.window = window

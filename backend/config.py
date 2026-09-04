@@ -15,6 +15,7 @@ DEFAULTS = {
     "ffmpeg_path": "",
     "max_concurrent": 2,
     "subtitle_langs": "",
+    "cookie_file_format": "netscape",
 }
 
 
