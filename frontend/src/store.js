@@ -11,6 +11,7 @@ export const store = reactive({
   probeResult: null,
   audioOnly: false,
   audioOnlyHint: false,
+  cookieFallback: false,
 })
 
 const AUDIO_EXT_RE = /\.(m4a|mp3|aac|opus|ogg|wav|flac)$/i
@@ -27,6 +28,8 @@ export async function initStore() {
       }
     } else if (e.type === 'need_playlist') {
       store.pendingPlaylist = e
+    } else if (e.type === 'cookie_fallback') {
+      store.cookieFallback = true
     } else if (e.type === 'ffmpeg_progress') {
       if (e.percent === -1) {
         store.ffmpegProgress = null

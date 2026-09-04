@@ -4,7 +4,7 @@ import time
 from backend.config import Config, DEFAULTS
 from backend.downloader import DownloadManager
 from backend.models import TaskStatus
-from fakes import FAIL_URLS, GATES, FakeYDL
+from fakes import COOKIE_FAIL_URLS, FAIL_URLS, GATES, FakeYDL
 
 
 def wait_until(cond, timeout=3.0):
@@ -145,3 +145,19 @@ def test_playlist_cancel_while_waiting(tmp_path):
     assert wait_until(lambda: m.tasks[tid].status is TaskStatus.WAITING)
     m.cancel_task(tid)
     assert wait_until(lambda: m.tasks[tid].status is TaskStatus.CANCELLED)
+
+
+def test_cookie_lock_falls_back_to_no_cookie(tmp_path):
+    COOKIE_FAIL_URLS.add("https://example.com/v1")
+    events = []
+    cfg = Config(path=tmp_path / "config.json",
+                 defaults={**DEFAULTS, "max_concurrent": 1,
+                           "cookies_browser": "edge"})
+    m = DownloadManager(cfg, events.append, ydl_factory=FakeYDL,
+                        tasks_file=tmp_path / "tasks.json", max_workers=1)
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    assert any(e["type"] == "cookie_fallback" for e in events)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert "cookiesfrombrowser" in dl_opts[0]
+    assert "cookiesfrombrowser" not in dl_opts[-1]

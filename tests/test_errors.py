@@ -24,3 +24,10 @@ def test_unknown_error_passthrough():
 
 def test_empty_error():
     assert humanize_error("") == ""
+
+
+def test_is_cookie_db_error():
+    from backend.errors import is_cookie_db_error
+    assert is_cookie_db_error("ERROR: Could not copy Chrome cookie database. See ...") is True
+    assert is_cookie_db_error("HTTP Error 412: Precondition Failed") is False
+    assert is_cookie_db_error("") is False

@@ -11,7 +11,7 @@ import yt_dlp
 
 from .config import TASKS_FILE
 from .ffmpeg_mgr import find_ffmpeg
-from .errors import humanize_error
+from .errors import humanize_error, is_cookie_db_error
 from .models import Task, TaskStatus
 
 
@@ -32,6 +32,7 @@ class DownloadManager:
         self._choice: dict[str, threading.Event] = {}
         self._selection: dict[str, list[int]] = {}
         self._retried: set[str] = set()
+        self._cookie_fallback: set[str] = set()
         self._last_notify: dict[str, float] = {}
         self._lock = threading.Lock()
         self._persist_lock = threading.Lock()
@@ -127,7 +128,7 @@ class DownloadManager:
             self._fail(task, str(e))
 
     def _probe(self, task: Task):
-        opts = self._base_options()
+        opts = self._base_options(task)
         opts["skip_download"] = True
         ydl = self._ydl_factory(opts)
         info = ydl.extract_info(task.url, download=False)
@@ -158,7 +159,7 @@ class DownloadManager:
                 raise yt_dlp.utils.DownloadCancelled()
         return True
 
-    def _base_options(self) -> dict:
+    def _base_options(self, task: Task | None = None) -> dict:
         opts = {
             "outtmpl": str(Path(self.config.get("download_dir")) /
                            "%(title)s [%(id)s].%(ext)s"),
@@ -169,7 +170,9 @@ class DownloadManager:
         }
         cookie_file = self.config.get("cookie_file")
         cookies_browser = self.config.get("cookies_browser")
-        if cookie_file:
+        if task is not None and task.id in self._cookie_fallback:
+            pass
+        elif cookie_file:
             opts["cookiefile"] = cookie_file
         elif cookies_browser:
             opts["cookiesfrombrowser"] = (cookies_browser,)
@@ -183,7 +186,7 @@ class DownloadManager:
         return opts
 
     def _build_options(self, task: Task) -> dict:
-        opts = self._base_options()
+        opts = self._base_options(task)
         opts["format"] = task.options.get("format") or "bestvideo*+bestaudio/best"
         if task.options.get("audio_only"):
             opts["postprocessors"] = [{
@@ -219,6 +222,15 @@ class DownloadManager:
             self._notify(task)
 
     def _fail(self, task: Task, msg: str):
+        if (is_cookie_db_error(msg) and task.id not in self._cookie_fallback
+                and (self.config.get("cookie_file")
+                     or self.config.get("cookies_browser"))):
+            self._cookie_fallback.add(task.id)
+            self._push({"type": "cookie_fallback"})
+            task.error = "浏览器 Cookie 读取失败，本次已自动改用无 Cookie 模式重试"
+            self._reset(task)
+            self._q.put(task.id)
+            return
         if task.id not in self._retried:
             self._retried.add(task.id)
             self._reset(task)

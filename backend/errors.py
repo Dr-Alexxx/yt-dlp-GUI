@@ -17,3 +17,7 @@ def humanize_error(raw: str) -> str:
         if pattern in raw:
             return f"{hint}\n原始错误：{raw}"
     return raw
+
+
+def is_cookie_db_error(raw: str) -> bool:
+    return bool(raw) and "Could not copy Chrome cookie database" in raw
