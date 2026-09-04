@@ -60,6 +60,16 @@ async function add() {
     else url.value = ''
   }
 }
+
+async function probe() {
+  const target = batchMode.value ? batchText.value.split(/\r?\n/)[0] : url.value
+  const r = await call('probe_url', (target || '').trim())
+  if (!r.ok) {
+    message.error(r.error)
+    return
+  }
+  store.probeResult = { url: (target || '').trim(), info: r.info }
+}
 </script>
 
 <template>
@@ -79,6 +89,7 @@ async function add() {
     <n-button type="primary" style="margin: 8px 0 16px" @click="add">
       {{ batchMode ? '批量添加' : '添加下载' }}
     </n-button>
+    <n-button style="margin: 8px 0 16px" @click="probe">解析格式…</n-button>
     <n-data-table :columns="columns" :data="store.tasks" size="small" />
   </div>
 </template>

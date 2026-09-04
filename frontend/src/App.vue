@@ -7,6 +7,8 @@ import {
 import TasksView from './views/TasksView.vue'
 import SettingsView from './views/SettingsView.vue'
 import FfmpegBanner from './components/FfmpegBanner.vue'
+import PlaylistDialog from './components/PlaylistDialog.vue'
+import FormatDialog from './components/FormatDialog.vue'
 import { store, initStore } from './store'
 
 onMounted(initStore)
@@ -29,6 +31,8 @@ onMounted(initStore)
           <SettingsView v-else />
         </n-layout-content>
       </n-layout>
+      <PlaylistDialog />
+      <FormatDialog />
     </n-message-provider>
   </n-config-provider>
 </template>
