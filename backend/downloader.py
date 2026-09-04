@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import queue
 import threading
 import time
@@ -32,6 +33,7 @@ class DownloadManager:
         self._retried: set[str] = set()
         self._last_notify: dict[str, float] = {}
         self._lock = threading.Lock()
+        self._persist_lock = threading.Lock()
         self._load_history()
         n = max_workers if max_workers is not None else int(config.get("max_concurrent"))
         for _ in range(max(1, n)):
@@ -90,7 +92,10 @@ class DownloadManager:
                 task_id = self._q.get(timeout=0.5)
             except queue.Empty:
                 continue
-            self._process(self.tasks[task_id])
+            try:
+                self._process(self.tasks[task_id])
+            except Exception:
+                pass
 
     def _process(self, task: Task):
         if self._cancel[task.id].is_set():
@@ -241,9 +246,14 @@ class DownloadManager:
         with self._lock:
             data = {"order": list(self.order),
                     "tasks": [self.tasks[i].to_dict() for i in self.order]}
-        self.tasks_file.parent.mkdir(parents=True, exist_ok=True)
-        self.tasks_file.write_text(
-            json.dumps(data, ensure_ascii=False), "utf-8")
+        tmp = self.tasks_file.with_suffix(".json.tmp")
+        try:
+            with self._persist_lock:
+                self.tasks_file.parent.mkdir(parents=True, exist_ok=True)
+                tmp.write_text(json.dumps(data, ensure_ascii=False), "utf-8")
+                os.replace(tmp, self.tasks_file)
+        except OSError:
+            pass
 
     def _load_history(self):
         if not self.tasks_file.exists():

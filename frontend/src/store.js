@@ -9,6 +9,7 @@ export const store = reactive({
   ffmpegError: '',
   pendingPlaylist: null,
   probeResult: null,
+  audioOnly: false,
 })
 
 export async function initStore() {

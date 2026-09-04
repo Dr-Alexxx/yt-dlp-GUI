@@ -15,10 +15,19 @@ ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist" / "index.html"
 
 
-def make_push(window):
+class LateWindow:
+    def __init__(self):
+        self.window = None
+
+    def evaluate_js(self, script):
+        if self.window is not None:
+            self.window.evaluate_js(script)
+
+
+def make_push(holder):
     def push(event):
         try:
-            window.evaluate_js(
+            holder.evaluate_js(
                 "window.__pushEvent(" +
                 json.dumps(event, ensure_ascii=False) + ")")
         except Exception:
@@ -29,12 +38,14 @@ def make_push(window):
 def main():
     dev = "--dev" in sys.argv
     url = "http://localhost:5173" if dev else str(DIST)
-    window = webview.create_window("yt-dlp 下载器", url,
-                                   width=1100, height=750)
-    push = make_push(window)
+    holder = LateWindow()
+    push = make_push(holder)
     config = Config()
     manager = DownloadManager(config, push)
     api = JsApi(manager, config, push)
+    window = webview.create_window("yt-dlp 下载器", url, js_api=api,
+                                   width=1100, height=750)
+    holder.window = window
 
     def on_closing():
         if not manager.has_active():

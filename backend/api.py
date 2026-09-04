@@ -19,6 +19,7 @@ class JsApi:
         self.manager = manager
         self.config = config
         self._push = push_event
+        self._ffmpeg_dl_lock = threading.Lock()
 
     def add_task(self, url, options=None):
         url = (url or "").strip() if isinstance(url, str) else ""
@@ -105,6 +106,11 @@ class JsApi:
 
     def download_ffmpeg(self):
         def work():
+            if not self._ffmpeg_dl_lock.acquire(blocking=False):
+                self._push({"type": "ffmpeg_progress",
+                            "percent": -1, "error": "下载进行中"})
+                return
+
             def cb(percent):
                 self._push({"type": "ffmpeg_progress", "percent": percent})
             try:
@@ -114,5 +120,7 @@ class JsApi:
             except Exception as e:
                 self._push({"type": "ffmpeg_progress",
                             "percent": -1, "error": str(e)})
+            finally:
+                self._ffmpeg_dl_lock.release()
         threading.Thread(target=work, daemon=True).start()
         return {"ok": True}

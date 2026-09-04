@@ -10,7 +10,6 @@ const message = useMessage()
 const url = ref('')
 const batchMode = ref(false)
 const batchText = ref('')
-const audioOnly = ref(false)
 
 const statusMap = {
   queued: '排队中', probing: '解析中', waiting: '等待选择',
@@ -49,7 +48,7 @@ const columns = [
 ]
 
 async function add() {
-  const options = audioOnly.value ? { audio_only: true } : {}
+  const options = store.audioOnly ? { audio_only: true } : {}
   if (batchMode.value) {
     const r = await call('add_batch', batchText.value, options)
     if (r.errors?.length) message.error(r.errors.join('；'))
@@ -78,7 +77,7 @@ async function probe() {
       <span>批量</span>
       <n-switch v-model:value="batchMode" size="small" />
       <span>仅音频 (MP3)</span>
-      <n-switch v-model:value="audioOnly" size="small" />
+      <n-switch v-model:value="store.audioOnly" size="small" />
     </div>
     <n-input
       v-if="!batchMode" v-model:value="url" type="text"

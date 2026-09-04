@@ -23,7 +23,10 @@ const rowProps = (row) => ({
 
 async function start() {
   const format = choice.value === 'best' ? undefined : choice.value
-  await call('add_task', store.probeResult.url, format ? { format } : {})
+  const options = {}
+  if (format) options.format = format
+  if (store.audioOnly) options.audio_only = true
+  await call('add_task', store.probeResult.url, options)
   store.probeResult = null
 }
 
