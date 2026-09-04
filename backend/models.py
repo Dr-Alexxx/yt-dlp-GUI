@@ -19,7 +19,7 @@ ALLOWED: dict[TaskStatus, set[TaskStatus]] = {
     TaskStatus.QUEUED: {TaskStatus.PROBING, TaskStatus.CANCELLED},
     TaskStatus.PROBING: {TaskStatus.WAITING, TaskStatus.DOWNLOADING, TaskStatus.ERROR, TaskStatus.CANCELLED},
     TaskStatus.WAITING: {TaskStatus.DOWNLOADING, TaskStatus.CANCELLED},
-    TaskStatus.DOWNLOADING: {TaskStatus.DONE, TaskStatus.ERROR, TaskStatus.CANCELLED},
+    TaskStatus.DOWNLOADING: {TaskStatus.DONE, TaskStatus.ERROR, TaskStatus.CANCELLED, TaskStatus.QUEUED},
     TaskStatus.ERROR: {TaskStatus.QUEUED},
     TaskStatus.CANCELLED: {TaskStatus.QUEUED},
     TaskStatus.DONE: set(),

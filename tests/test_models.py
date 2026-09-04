@@ -28,6 +28,9 @@ def test_retry_transitions():
     t.transition(TaskStatus.DOWNLOADING)
     t.transition(TaskStatus.CANCELLED)
     assert t.transition(TaskStatus.QUEUED) is True
+    t.transition(TaskStatus.PROBING)
+    t.transition(TaskStatus.DOWNLOADING)
+    assert t.transition(TaskStatus.QUEUED) is True
 
 
 def test_done_is_terminal():
