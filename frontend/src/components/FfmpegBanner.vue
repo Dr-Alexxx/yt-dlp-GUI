@@ -24,4 +24,12 @@ import { store } from '../store'
       重试
     </n-button>
   </n-alert>
+  <n-alert
+    v-if="store.audioOnlyHint && !store.ffmpegPath && store.ffmpegProgress === null"
+    type="warning" style="margin-bottom: 12px" closable
+    @close="store.audioOnlyHint = false"
+  >
+    检测到刚完成的任务只得到纯音频文件：FFmpeg 未就绪，无法合并视频 + 音频流。
+    点击上方「自动下载到应用目录」后重新下载即可得到完整视频。
+  </n-alert>
 </template>

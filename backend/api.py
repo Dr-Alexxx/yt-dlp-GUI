@@ -4,6 +4,7 @@ import threading
 
 import yt_dlp
 
+from .errors import humanize_error
 from .ffmpeg_mgr import download_ffmpeg, find_ffmpeg
 
 CONFIG_KEYS = {"download_dir", "cookie_file", "cookies_browser",
@@ -82,7 +83,7 @@ class JsApi:
         try:
             info = yt_dlp.YoutubeDL(opts).extract_info(url, download=False)
         except Exception as e:
-            return {"ok": False, "error": str(e)}
+            return {"ok": False, "error": humanize_error(str(e))}
         formats = [{"format_id": f.get("format_id"), "ext": f.get("ext"),
                     "resolution": f.get("resolution") or f.get("format_note"),
                     "filesize": f.get("filesize") or f.get("filesize_approx"),

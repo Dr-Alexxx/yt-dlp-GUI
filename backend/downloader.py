@@ -11,6 +11,7 @@ import yt_dlp
 
 from .config import TASKS_FILE
 from .ffmpeg_mgr import find_ffmpeg
+from .errors import humanize_error
 from .models import Task, TaskStatus
 
 
@@ -223,7 +224,7 @@ class DownloadManager:
             self._reset(task)
             self._q.put(task.id)
             return
-        task.error = msg[:200]
+        task.error = humanize_error(msg)[:400]
         task.transition(TaskStatus.ERROR)
         self._notify(task)
 

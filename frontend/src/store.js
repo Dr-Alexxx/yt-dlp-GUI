@@ -10,7 +10,10 @@ export const store = reactive({
   pendingPlaylist: null,
   probeResult: null,
   audioOnly: false,
+  audioOnlyHint: false,
 })
+
+const AUDIO_EXT_RE = /\.(m4a|mp3|aac|opus|ogg|wav|flac)$/i
 
 export async function initStore() {
   window.__pushEvent = (e) => {
@@ -18,6 +21,10 @@ export async function initStore() {
       const i = store.tasks.findIndex((t) => t.id === e.task.id)
       if (i >= 0) store.tasks.splice(i, 1, e.task)
       else store.tasks.unshift(e.task)
+      if (e.task.status === 'done' && !store.ffmpegPath &&
+          AUDIO_EXT_RE.test(e.task.filepath || '')) {
+        store.audioOnlyHint = true
+      }
     } else if (e.type === 'need_playlist') {
       store.pendingPlaylist = e
     } else if (e.type === 'ffmpeg_progress') {
