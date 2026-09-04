@@ -53,7 +53,8 @@ class DownloadManager:
             return [self.tasks[i].to_dict() for i in self.order]
 
     def has_active(self) -> bool:
-        return any(t.status in self.ACTIVE for t in self.tasks.values())
+        with self._lock:
+            return any(t.status in self.ACTIVE for t in self.tasks.values())
 
     def _worker(self):
         while True:
@@ -209,8 +210,9 @@ class DownloadManager:
         self._persist()
 
     def _persist(self):
-        data = {"order": self.order,
-                "tasks": [self.tasks[i].to_dict() for i in self.order]}
+        with self._lock:
+            data = {"order": list(self.order),
+                    "tasks": [self.tasks[i].to_dict() for i in self.order]}
         self.tasks_file.parent.mkdir(parents=True, exist_ok=True)
         self.tasks_file.write_text(
             json.dumps(data, ensure_ascii=False), "utf-8")
