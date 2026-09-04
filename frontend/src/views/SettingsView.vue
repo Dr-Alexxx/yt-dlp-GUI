@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { NButton, NForm, NFormItem, NInput, NInputNumber, NSelect, useMessage } from 'naive-ui'
+import { NButton, NCollapse, NCollapseItem, NForm, NFormItem, NInput, NInputNumber, NSelect, useMessage } from 'naive-ui'
 import { call } from '../api'
 
 const message = useMessage()
@@ -35,6 +35,20 @@ async function save() {
     <n-form-item label="Cookie 文件路径">
       <n-input v-model:value="form.cookie_file" placeholder="可选，cookies.txt 路径" />
     </n-form-item>
+    <n-collapse style="margin: 0 0 12px 150px; max-width: 560px">
+      <n-collapse-item title="如何导入 Cookie？（B 站 1080P 等登录画质需要）" name="cookie-help">
+        <div style="font-size: 13px; line-height: 1.8">
+          <p style="margin: 0 0 6px">三种方法任选其一，得到 <b>cookies.txt</b> 后把完整路径填到上方「Cookie 文件路径」，保存即可（「浏览器 Cookie」保持「不使用」）：</p>
+          <p style="margin: 0 0 6px"><b>方法一：浏览器扩展（推荐）</b><br />
+            Edge/Chrome 安装扩展 <i>Get cookies.txt LOCALLY</i> → 登录 bilibili.com → 在 B 站页面点扩展图标 → Export 保存。</p>
+          <p style="margin: 0 0 6px"><b>方法二：GetCookie 工具</b><br />
+            下载 github.com/ytdl-patched/GetCookie 的 Release exe，双击自动生成 cookies.txt。</p>
+          <p style="margin: 0 0 6px"><b>方法三：yt-dlp 命令行</b><br />
+            关闭浏览器后运行：yt-dlp --cookies-from-browser edge --cookies cookies.txt --skip-download "https://www.bilibili.com"</p>
+          <p style="margin: 4px 0 0; color: #e8a33d">⚠ cookies.txt 是你的登录凭证，不要分享给任何人；画质变化后可重新导出。</p>
+        </div>
+      </n-collapse-item>
+    </n-collapse>
     <n-form-item label="浏览器 Cookie">
       <n-select v-model:value="form.cookies_browser" :options="browserOptions" />
     </n-form-item>
