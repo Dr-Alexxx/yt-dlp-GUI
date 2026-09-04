@@ -97,11 +97,7 @@ class JsApi:
     def save_config(self, patch):
         for key, value in (patch or {}).items():
             if key in CONFIG_KEYS:
-                setter = getattr(self.config, "set", None)
-                if callable(setter):
-                    setter(key, value)
-                else:
-                    self.config.data[key] = value
+                self.config.set(key, value)
         return {"ok": True}
 
     def check_ffmpeg(self):

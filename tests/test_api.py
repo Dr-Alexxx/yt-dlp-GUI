@@ -3,6 +3,14 @@ from types import SimpleNamespace
 from backend.api import JsApi
 
 
+class FakeConfig:
+    def __init__(self):
+        self.data = {"max_concurrent": 2}
+
+    def set(self, key, value):
+        self.data[key] = value
+
+
 class FakeManager:
     def __init__(self):
         self.calls = []
@@ -33,7 +41,7 @@ class FakeManager:
 
 
 def make_api():
-    m, cfg = FakeManager(), SimpleNamespace(data={"max_concurrent": 2})
+    m, cfg = FakeManager(), FakeConfig()
     return JsApi(m, cfg, lambda e: None), m
 
 
