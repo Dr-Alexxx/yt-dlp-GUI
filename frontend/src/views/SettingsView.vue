@@ -22,13 +22,23 @@ const formatOptions = [
 ]
 
 async function browseCookie() {
-  const r = await call('pick_cookie_file')
-  if (r.ok && r.path) form.value.cookie_file = r.path
+  try {
+    const r = await call('pick_cookie_file')
+    if (r.ok && r.path) form.value.cookie_file = r.path
+    else if (!r.ok) message.error(r.error)
+  } catch (e) {
+    message.error('打开文件对话框失败：' + e)
+  }
 }
 
 async function browseDir() {
-  const r = await call('pick_download_dir')
-  if (r.ok && r.path) form.value.download_dir = r.path
+  try {
+    const r = await call('pick_download_dir')
+    if (r.ok && r.path) form.value.download_dir = r.path
+    else if (!r.ok) message.error(r.error)
+  } catch (e) {
+    message.error('打开文件夹对话框失败：' + e)
+  }
 }
 
 onMounted(async () => {

@@ -29,15 +29,18 @@ class JsApi:
         window = getattr(self._holder, "window", None) if self._holder else None
         if window is None:
             return {"ok": False, "error": "窗口未就绪"}
-        result = window.create_file_dialog(dialog_type, allow_multiple=False,
-                                           file_types=file_types)
+        try:
+            result = window.create_file_dialog(dialog_type, allow_multiple=False,
+                                               file_types=file_types)
+        except Exception as e:
+            return {"ok": False, "error": f"打开文件对话框失败：{e}"}
         if not result:
             return {"ok": True, "path": ""}
         return {"ok": True, "path": result[0]}
 
     def pick_cookie_file(self):
         return self._pick(webview.OPEN_DIALOG,
-                          ("Cookie 文件 (*.txt;*.json)", "*.*"))
+                          ("Cookie 文件 (*.txt;*.json)",))
 
     def pick_download_dir(self):
         return self._pick(webview.FOLDER_DIALOG)
