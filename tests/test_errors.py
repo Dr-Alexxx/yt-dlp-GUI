@@ -31,3 +31,17 @@ def test_is_cookie_db_error():
     assert is_cookie_db_error("ERROR: Could not copy Chrome cookie database. See ...") is True
     assert is_cookie_db_error("HTTP Error 412: Precondition Failed") is False
     assert is_cookie_db_error("") is False
+
+
+def test_is_fresh_cookies_error():
+    from backend.errors import is_fresh_cookies_error
+    assert is_fresh_cookies_error(
+        "ERROR: [Douyin] 123: Fresh cookies (not necessarily logged in) are needed") is True
+    assert is_fresh_cookies_error("HTTP Error 412") is False
+    assert is_fresh_cookies_error("") is False
+
+
+def test_humanize_fresh_cookies():
+    from backend.errors import humanize_error
+    msg = humanize_error("ERROR: Fresh cookies (not necessarily logged in) are needed")
+    assert "风控" in msg and "重试" in msg

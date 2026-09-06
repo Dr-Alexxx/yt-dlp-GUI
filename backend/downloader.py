@@ -12,13 +12,15 @@ import yt_dlp
 from .config import TASKS_FILE
 from .cookies import resolve_cookie_file
 from .ffmpeg_mgr import find_ffmpeg
-from .errors import humanize_error, is_cookie_db_error
+from .errors import humanize_error, is_cookie_db_error, is_fresh_cookies_error
 from .models import Task, TaskStatus
 
 
 class DownloadManager:
     ACTIVE = {TaskStatus.QUEUED, TaskStatus.PROBING,
               TaskStatus.WAITING, TaskStatus.DOWNLOADING}
+    FRESH_RETRY_DELAY = 5.0
+    FRESH_RETRY_MAX = 3
 
     def __init__(self, config, push_event, ydl_factory=None,
                  max_workers=None, tasks_file: Path = TASKS_FILE):
@@ -34,6 +36,7 @@ class DownloadManager:
         self._selection: dict[str, list[int]] = {}
         self._retried: set[str] = set()
         self._cookie_fallback: set[str] = set()
+        self._fresh_retries: dict[str, int] = {}
         self._last_notify: dict[str, float] = {}
         self._lock = threading.Lock()
         self._persist_lock = threading.Lock()
@@ -203,6 +206,8 @@ class DownloadManager:
             parsed = [s.strip() for s in langs.split(",") if s.strip()]
             if parsed:
                 opts["subtitleslangs"] = parsed
+        if task.options.get("custom_ua") and task.options.get("ua_string"):
+            opts["http_headers"] = {"User-Agent": task.options["ua_string"]}
         opts["progress_hooks"] = [lambda d: self._hook(task, d)]
         return opts
 
@@ -237,6 +242,16 @@ class DownloadManager:
             self._reset(task)
             self._q.put(task.id)
             return
+        if is_fresh_cookies_error(msg):
+            n = self._fresh_retries.get(task.id, 0)
+            if n < self.FRESH_RETRY_MAX:
+                self._fresh_retries[task.id] = n + 1
+                task.error = (f"被抖音风控拦截，{self.FRESH_RETRY_DELAY:g} 秒后"
+                              f"自动重试（{n + 1}/{self.FRESH_RETRY_MAX}）")
+                self._reset(task)
+                threading.Timer(self.FRESH_RETRY_DELAY,
+                                lambda: self._q.put(task.id)).start()
+                return
         if task.id not in self._retried:
             self._retried.add(task.id)
             self._reset(task)

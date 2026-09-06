@@ -4,7 +4,7 @@ import time
 from backend.config import Config, DEFAULTS
 from backend.downloader import DownloadManager
 from backend.models import TaskStatus
-from fakes import COOKIE_FAIL_URLS, FAIL_URLS, GATES, FakeYDL
+from fakes import COOKIE_FAIL_URLS, FRESH_FAIL_URLS, FAIL_URLS, GATES, FakeYDL
 
 
 def wait_until(cond, timeout=3.0):
@@ -180,3 +180,40 @@ def test_no_subtitles_by_default(tmp_path):
     dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
     assert "writesubtitles" not in dl_opts[-1]
     assert "subtitleslangs" not in dl_opts[-1]
+
+
+def test_custom_user_agent(tmp_path):
+    m = make_manager(tmp_path, [])
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TestUA/1.0"
+    tid = m.add_task("https://example.com/v1",
+                     {"custom_ua": True, "ua_string": ua})
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert dl_opts[-1]["http_headers"]["User-Agent"] == ua
+
+
+def test_default_user_agent_untouched(tmp_path):
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert "http_headers" not in dl_opts[-1]
+
+
+def test_fresh_cookies_auto_retry(tmp_path, monkeypatch):
+    monkeypatch.setattr(DownloadManager, "FRESH_RETRY_DELAY", 0.1)
+    FRESH_FAIL_URLS.add("https://example.com/v1")
+    FRESH_FAIL_URLS.add("https://example.com/v1")
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+
+
+def test_fresh_cookies_cap_then_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(DownloadManager, "FRESH_RETRY_DELAY", 0.1)
+    for _ in range(5):
+        FRESH_FAIL_URLS.add("https://example.com/v1")
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.ERROR, timeout=8)
+    assert "风控" in m.tasks[tid].error

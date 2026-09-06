@@ -87,9 +87,11 @@ def test_valid_task_calls_forwarded():
 
 
 def test_probe_url(monkeypatch):
+    seen_opts = []
+
     class FakeYDL:
         def __init__(self, opts):
-            self.opts = opts
+            seen_opts.append(opts)
 
         def extract_info(self, url, download=False):
             return {"title": "T", "duration": 5, "formats": [
@@ -104,6 +106,12 @@ def test_probe_url(monkeypatch):
     assert r["info"]["title"] == "T"
     assert r["info"]["formats"][0]["format_id"] == "18"
     assert api.probe_url("bad")["ok"] is False
+    r2 = api.probe_url("https://example.com/v", ua="UA-TEST")
+    assert r2["ok"] is True
+    assert seen_opts[-1]["http_headers"]["User-Agent"] == "UA-TEST"
+    r3 = api.probe_url("https://example.com/v")
+    assert r3["ok"] is True
+    assert "http_headers" not in seen_opts[-1]
 
 
 def test_save_config_whitelist():

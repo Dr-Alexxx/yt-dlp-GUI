@@ -96,12 +96,14 @@ class JsApi:
         self.manager.submit_playlist_selection(task_id, entries)
         return {"ok": True}
 
-    def probe_url(self, url):
+    def probe_url(self, url, ua=None):
         url = (url or "").strip() if isinstance(url, str) else ""
         if not _valid_url(url):
             return {"ok": False, "error": "无效的 URL"}
         opts = {"quiet": True, "no_warnings": True,
                 "skip_download": True, "noplaylist": True}
+        if ua:
+            opts["http_headers"] = {"User-Agent": ua}
         try:
             info = yt_dlp.YoutubeDL(opts).extract_info(url, download=False)
         except Exception as e:

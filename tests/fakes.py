@@ -9,6 +9,7 @@ class _CountingFailURLs(Counter):
 
 FAIL_URLS = _CountingFailURLs()
 COOKIE_FAIL_URLS = set()
+FRESH_FAIL_URLS = _CountingFailURLs()
 GATES = {}
 
 
@@ -34,6 +35,10 @@ class FakeYDL:
             raise yt_dlp.utils.DownloadError(
                 "Could not copy Chrome cookie database. See "
                 "https://github.com/yt-dlp/yt-dlp/issues/7271 for more info")
+        if FRESH_FAIL_URLS[url] > 0:
+            FRESH_FAIL_URLS[url] -= 1
+            raise yt_dlp.utils.DownloadError(
+                "Fresh cookies (not necessarily logged in) are needed")
         if FAIL_URLS[url] > 0:
             FAIL_URLS[url] -= 1
             raise yt_dlp.utils.DownloadError("HTTP Error 403")

@@ -54,6 +54,10 @@ async function add() {
     options.subtitles = true
     if (store.subtitleLangs.trim()) options.subtitle_langs = store.subtitleLangs.trim()
   }
+  if (store.customUa && store.uaString.trim()) {
+    options.custom_ua = true
+    options.ua_string = store.uaString.trim()
+  }
   if (batchMode.value) {
     const r = await call('add_batch', batchText.value, options)
     if (r.errors?.length) message.error(r.errors.join('；'))
@@ -67,7 +71,8 @@ async function add() {
 
 async function probe() {
   const target = batchMode.value ? batchText.value.split(/\r?\n/)[0] : url.value
-  const r = await call('probe_url', (target || '').trim())
+  const ua = store.customUa && store.uaString.trim() ? store.uaString.trim() : null
+  const r = await call('probe_url', (target || '').trim(), ua)
   if (!r.ok) {
     message.error(r.error)
     return
@@ -89,6 +94,12 @@ async function probe() {
         v-if="store.wantSubtitles" v-model:value="store.subtitleLangs"
         size="small" style="width: 220px"
         placeholder="语言，如 zh-CN,en；留空=默认字幕" />
+      <span>自定义 UA</span>
+      <n-switch v-model:value="store.customUa" size="small" />
+    </div>
+    <n-input
+      v-if="store.customUa" v-model:value="store.uaString" size="small"
+      style="margin-bottom: 6px" placeholder="粘贴目标网站的 User-Agent（网站页面 F12 控制台输入 navigator.userAgent 回车）" />
     </div>
     <n-input
       v-if="!batchMode" v-model:value="url" type="text"

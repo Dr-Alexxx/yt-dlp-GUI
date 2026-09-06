@@ -7,6 +7,9 @@ _PATTERNS = [
     ("HTTP Error 412",
      "被网站风控拦截（HTTP 412）：通常与浏览器导出的 Cookie 请求特征有关。"
      "建议改用无 Cookie 模式，或用 GetCookie 等工具导出 cookies.txt 填入设置页。"),
+    ("Fresh cookies",
+     "被抖音风控拦截（Cookie 新鲜度校验未通过，间歇性发生）。"
+     "应用会自动重试；若多次失败，请重新导出 cookies.txt（需在 douyin.com 页面上导出，确保包含 ttwid）。"),
 ]
 
 
@@ -21,3 +24,7 @@ def humanize_error(raw: str) -> str:
 
 def is_cookie_db_error(raw: str) -> bool:
     return bool(raw) and "Could not copy Chrome cookie database" in raw
+
+
+def is_fresh_cookies_error(raw: str) -> bool:
+    return bool(raw) and "Fresh cookies" in raw

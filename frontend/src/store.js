@@ -12,6 +12,8 @@ export const store = reactive({
   audioOnly: false,
   wantSubtitles: false,
   subtitleLangs: '',
+  customUa: false,
+  uaString: '',
   audioOnlyHint: false,
   cookieFallback: false,
 })
