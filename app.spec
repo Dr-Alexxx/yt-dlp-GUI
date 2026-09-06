@@ -24,7 +24,7 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name='yt-dlp下载器',
+    name='yt-dlp-GUI',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -38,5 +38,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name='yt-dlp下载器',
+    name='yt-dlp-GUI',
 )
