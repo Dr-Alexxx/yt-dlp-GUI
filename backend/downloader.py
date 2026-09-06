@@ -180,10 +180,6 @@ class DownloadManager:
                 task.url if task is not None else "")
         elif cookies_browser:
             opts["cookiesfrombrowser"] = (cookies_browser,)
-        langs = self.config.get("subtitle_langs")
-        if langs:
-            opts["writesubtitles"] = True
-            opts["subtitleslangs"] = [s.strip() for s in langs.split(",") if s.strip()]
         ff = find_ffmpeg(self.config)
         if ff:
             opts["ffmpeg_location"] = str(Path(ff).parent)
@@ -201,6 +197,12 @@ class DownloadManager:
         sel = self._selection.get(task.id)
         if sel:
             opts["playlist_items"] = ",".join(str(i) for i in sorted(sel))
+        if task.options.get("subtitles"):
+            opts["writesubtitles"] = True
+            langs = task.options.get("subtitle_langs") or ""
+            parsed = [s.strip() for s in langs.split(",") if s.strip()]
+            if parsed:
+                opts["subtitleslangs"] = parsed
         opts["progress_hooks"] = [lambda d: self._hook(task, d)]
         return opts
 

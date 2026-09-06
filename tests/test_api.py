@@ -108,9 +108,9 @@ def test_probe_url(monkeypatch):
 
 def test_save_config_whitelist():
     api, _ = make_api()
-    r = api.save_config({"subtitle_langs": "zh-CN", "hacker_key": "x"})
+    r = api.save_config({"ffmpeg_path": "C:/bin", "hacker_key": "x"})
     assert r["ok"] is True
-    assert api.config.data == {"max_concurrent": 2, "subtitle_langs": "zh-CN"}
+    assert api.config.data == {"max_concurrent": 2, "ffmpeg_path": "C:/bin"}
 
 
 def test_check_ffmpeg(monkeypatch):

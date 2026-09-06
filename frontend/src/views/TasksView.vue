@@ -48,7 +48,12 @@ const columns = [
 ]
 
 async function add() {
-  const options = store.audioOnly ? { audio_only: true } : {}
+  const options = {}
+  if (store.audioOnly) options.audio_only = true
+  if (store.wantSubtitles) {
+    options.subtitles = true
+    if (store.subtitleLangs.trim()) options.subtitle_langs = store.subtitleLangs.trim()
+  }
   if (batchMode.value) {
     const r = await call('add_batch', batchText.value, options)
     if (r.errors?.length) message.error(r.errors.join('；'))
@@ -78,6 +83,12 @@ async function probe() {
       <n-switch v-model:value="batchMode" size="small" />
       <span>仅音频 (MP3)</span>
       <n-switch v-model:value="store.audioOnly" size="small" />
+      <span>字幕</span>
+      <n-switch v-model:value="store.wantSubtitles" size="small" />
+      <n-input
+        v-if="store.wantSubtitles" v-model:value="store.subtitleLangs"
+        size="small" style="width: 220px"
+        placeholder="语言，如 zh-CN,en；留空=默认字幕" />
     </div>
     <n-input
       v-if="!batchMode" v-model:value="url" type="text"

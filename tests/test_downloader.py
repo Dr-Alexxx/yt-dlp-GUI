@@ -161,3 +161,22 @@ def test_cookie_lock_falls_back_to_no_cookie(tmp_path):
     dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
     assert "cookiesfrombrowser" in dl_opts[0]
     assert "cookiesfrombrowser" not in dl_opts[-1]
+
+
+def test_subtitles_from_task_options(tmp_path):
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1",
+                     {"subtitles": True, "subtitle_langs": "zh-CN,en"})
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert dl_opts[-1]["writesubtitles"] is True
+    assert dl_opts[-1]["subtitleslangs"] == ["zh-CN", "en"]
+
+
+def test_no_subtitles_by_default(tmp_path):
+    m = make_manager(tmp_path, [])
+    tid = m.add_task("https://example.com/v1")
+    assert wait_until(lambda: m.tasks[tid].status is TaskStatus.DONE)
+    dl_opts = [i.opts for i in FakeYDL.instances if "progress_hooks" in i.opts]
+    assert "writesubtitles" not in dl_opts[-1]
+    assert "subtitleslangs" not in dl_opts[-1]

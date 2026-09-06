@@ -6,7 +6,7 @@ import { call } from '../api'
 const message = useMessage()
 const form = ref({
   download_dir: '', cookie_file: '', cookie_file_format: 'netscape',
-  cookies_browser: '', subtitle_langs: '', max_concurrent: 2,
+  cookies_browser: '', max_concurrent: 2,
 })
 
 const browserOptions = [
@@ -82,9 +82,6 @@ async function save() {
     </n-collapse>
     <n-form-item label="浏览器 Cookie">
       <n-select v-model:value="form.cookies_browser" :options="browserOptions" />
-    </n-form-item>
-    <n-form-item label="字幕语言">
-      <n-input v-model:value="form.subtitle_langs" placeholder="逗号分隔，如 zh-CN,en；留空不下字幕" />
     </n-form-item>
     <n-form-item label="并发下载数">
       <n-input-number v-model:value="form.max_concurrent" :min="1" :max="5" />

@@ -10,6 +10,8 @@ export const store = reactive({
   pendingPlaylist: null,
   probeResult: null,
   audioOnly: false,
+  wantSubtitles: false,
+  subtitleLangs: '',
   audioOnlyHint: false,
   cookieFallback: false,
 })

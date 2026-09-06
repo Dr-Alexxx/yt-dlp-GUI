@@ -9,8 +9,7 @@ from .errors import humanize_error
 from .ffmpeg_mgr import download_ffmpeg, find_ffmpeg
 
 CONFIG_KEYS = {"download_dir", "cookie_file", "cookie_file_format",
-               "cookies_browser", "ffmpeg_path", "max_concurrent",
-               "subtitle_langs"}
+               "cookies_browser", "ffmpeg_path", "max_concurrent"}
 
 
 def _valid_url(url: str) -> bool:
