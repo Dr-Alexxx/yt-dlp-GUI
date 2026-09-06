@@ -100,7 +100,6 @@ async function probe() {
     <n-input
       v-if="store.customUa" v-model:value="store.uaString" size="small"
       style="margin-bottom: 6px" placeholder="粘贴目标网站的 User-Agent（网站页面 F12 控制台输入 navigator.userAgent 回车）" />
-    </div>
     <n-input
       v-if="!batchMode" v-model:value="url" type="text"
       placeholder="粘贴视频链接" @keyup.enter="add" />
