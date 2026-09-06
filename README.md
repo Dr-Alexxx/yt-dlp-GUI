@@ -1,4 +1,4 @@
-# yt-dlp 下载器
+# yt-dlp-GUI
 
 基于 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的 Windows 桌面 GUI 下载器。粘贴链接即可下载，无需命令行。PyWebview + Vue 3 构建，yt-dlp 以 Python API 方式内置，开箱即用。
 
@@ -24,8 +24,8 @@
 
 ### 方式一：直接使用（推荐）
 
-1. 下载 / 构建后将整个 `yt-dlp下载器` 文件夹放到任意位置
-2. 双击 `yt-dlp下载器.exe`
+1. 下载 / 构建后将整个 `yt-dlp-GUI` 文件夹放到任意位置
+2. 双击 `yt-dlp-GUI.exe`
 3. 粘贴视频链接，点「添加下载」
 
 ### 方式二：从源码运行
@@ -51,7 +51,7 @@ cd ..
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-产物在 `release\yt-dlp下载器\`，整个文件夹拷到其他 Windows 电脑可直接使用。
+产物在 `release\yt-dlp-GUI\`，整个文件夹拷到其他 Windows 电脑可直接使用。
 
 ## 使用说明
 
