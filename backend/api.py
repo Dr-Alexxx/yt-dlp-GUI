@@ -31,7 +31,7 @@ class JsApi:
             return {"ok": False, "error": "窗口未就绪"}
         try:
             result = window.create_file_dialog(dialog_type, allow_multiple=False,
-                                               file_types=file_types)
+                                               file_types=file_types or ())
         except Exception as e:
             return {"ok": False, "error": f"打开文件对话框失败：{e}"}
         if not result:

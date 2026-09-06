@@ -132,8 +132,8 @@ def test_file_pickers_use_window_dialog(monkeypatch):
     calls = []
 
     class FakeWindow:
-        def create_file_dialog(self, dialog_type, allow_multiple=False, file_types=None):
-            calls.append(dialog_type)
+        def create_file_dialog(self, dialog_type, allow_multiple=False, file_types=()):
+            calls.append((dialog_type, file_types))
             if dialog_type == "OPEN_DIALOG":
                 return ("C:/cookies.txt",)
             return ("C:/Downloads",)
@@ -146,4 +146,6 @@ def test_file_pickers_use_window_dialog(monkeypatch):
     r2 = api_obj.pick_download_dir()
     assert r1 == {"ok": True, "path": "C:/cookies.txt"}
     assert r2 == {"ok": True, "path": "C:/Downloads"}
-    assert calls == ["OPEN_DIALOG", "FOLDER_DIALOG"]
+    assert calls[0][0] == "OPEN_DIALOG"
+    assert calls[1][0] == "FOLDER_DIALOG"
+    assert calls[1][1] == ()
