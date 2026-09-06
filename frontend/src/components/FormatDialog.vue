@@ -8,8 +8,18 @@ const choice = ref('best')
 const visible = computed(() => !!store.probeResult)
 const rows = computed(() => store.probeResult?.info?.formats || [])
 
+const QUALITY_NAMES = {
+  '30016': '360P', '30032': '480P', '30064': '720P', '30080': '1080P',
+  '30112': '1080P 高码率', '30120': '4K', '30125': 'HDR 真彩',
+  '30126': '杜比视界', '30127': '8K 超高清',
+  '30216': '音频 64K', '30232': '音频 132K', '30280': '音频 192K',
+  '30250': '杜比全景声', '30251': 'Hi-Res 无损',
+}
+
 const columns = [
-  { title: 'ID', key: 'format_id', width: 100 },
+  { title: '质量', key: 'quality', width: 130,
+    render: (r) => QUALITY_NAMES[r.format_id] || `未知 (${r.format_id})` },
+  { title: 'ID', key: 'format_id', width: 90 },
   { title: '容器', key: 'ext', width: 70 },
   { title: '分辨率', key: 'resolution' },
   { title: '大小', key: 'filesize',
