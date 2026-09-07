@@ -1,8 +1,11 @@
 <script setup>
 import { computed, h, ref } from 'vue'
-import { NButton, NDataTable, NModal, NRadio, NRadioGroup } from 'naive-ui'
+import { NButton, NDataTable, NModal, NRadio, NRadioGroup, useMessage } from 'naive-ui'
 import { call } from '../api'
 import { store } from '../store'
+import { switchView } from '../store'
+
+const message = useMessage()
 
 const choice = ref('best')
 const visible = computed(() => !!store.probeResult)
@@ -40,6 +43,17 @@ async function start() {
   store.probeResult = null
 }
 
+async function play() {
+  const r = await call('start_play', store.probeResult.url, {})
+  store.probeResult = null
+  if (!r.ok) {
+    message.error(r.error)
+    return
+  }
+  store.playerSession = { id: r.session_id, status: 'progress', progress: 0 }
+  switchView('player')
+}
+
 function dismiss() {
   store.probeResult = null
 }
@@ -57,6 +71,7 @@ function dismiss() {
     <n-data-table :columns="columns" :data="rows" size="small" :row-props="rowProps" :max-height="360" />
     <template #footer>
       <n-button type="primary" @click="start">开始下载</n-button>
+      <n-button style="margin-left: 8px" @click="play">▶ 在线播放</n-button>
     </template>
   </n-modal>
 </template>
