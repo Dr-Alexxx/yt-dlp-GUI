@@ -96,10 +96,16 @@ FFmpeg 未就绪，无法合并视频+音频流。点横幅下载 FFmpeg 后重�
 │  ├─ models.py        # Task 状态机
 │  └─ config.py        # 配置与任务历史持久化（%APPDATA%\yt-dlp-gui）
 ├─ frontend/           # Vue 3 + Naive UI（Vite 构建）
-├─ tests/              # pytest（50 个用例）
+├─ tests/              # pytest（70 个用例）
 ├─ smoke.py            # 无 GUI 全链路冒烟：python smoke.py [url]
 └─ build.ps1           # 一键打包脚本
 ```
+
+## 致谢
+
+本项目的下载能力完全基于开源项目 [yt-dlp](https://github.com/yt-dlp/yt-dlp)（GPL/Unlicense，由 [yt-dlp 社区](https://github.com/yt-dlp/yt-dlp/graphs/contributors)维护）。在此感谢 yt-dlp 及其所有贡献者，是他们的工作让本项目得以只用一层图形界面就覆盖上千个站点。代码使用遵循其原始许可证。
+
+另致敬前端用到的 [Vue 3](https://vuejs.org/) 与 [Naive UI](https://www.naiveui.com/)。
 
 ## 开发
 
