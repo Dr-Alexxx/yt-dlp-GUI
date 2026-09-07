@@ -17,11 +17,13 @@ def _valid_url(url: str) -> bool:
 
 
 class JsApi:
-    def __init__(self, manager, config, push_event, dialog_holder=None):
+    def __init__(self, manager, config, push_event,
+                 dialog_holder=None, player_manager=None):
         self.manager = manager
         self.config = config
         self._push = push_event
         self._holder = dialog_holder
+        self.player = player_manager
         self._ffmpeg_dl_lock = threading.Lock()
 
     def _pick(self, dialog_type, file_types=None):
@@ -43,6 +45,19 @@ class JsApi:
 
     def pick_download_dir(self):
         return self._pick(webview.FOLDER_DIALOG)
+
+    def start_play(self, url, options=None):
+        url = (url or "").strip() if isinstance(url, str) else ""
+        if not _valid_url(url):
+            return {"ok": False, "error": "无效的 URL"}
+        if self.player is None:
+            return {"ok": False, "error": "播放模块未就绪"}
+        return self.player.start_play(url, options)
+
+    def stop_play(self, session_id):
+        if self.player is None:
+            return {"ok": False, "error": "播放模块未就绪"}
+        return self.player.stop_play(session_id)
 
     def add_task(self, url, options=None):
         url = (url or "").strip() if isinstance(url, str) else ""

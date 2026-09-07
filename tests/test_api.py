@@ -157,3 +157,26 @@ def test_file_pickers_use_window_dialog(monkeypatch):
     assert calls[0][0] == "OPEN_DIALOG"
     assert calls[1][0] == "FOLDER_DIALOG"
     assert calls[1][1] == ()
+
+
+def test_play_forwarding():
+    class FakePlayer:
+        def __init__(self):
+            self.calls = []
+        def start_play(self, url, options=None):
+            self.calls.append(("start", url, options))
+            return {"ok": True, "session_id": "p1"}
+        def stop_play(self, session_id):
+            self.calls.append(("stop", session_id))
+            return {"ok": True}
+
+    api, _ = make_api()
+    api.player = FakePlayer()
+    r = api.start_play("https://example.com/v", {"custom_ua": True})
+    assert r == {"ok": True, "session_id": "p1"}
+    assert api.player.calls[0] == ("start", "https://example.com/v", {"custom_ua": True})
+    assert api.stop_play("p1")["ok"] is True
+    assert api.player.calls[1] == ("stop", "p1")
+    assert api.start_play("bad")["ok"] is False
+    api.player = None
+    assert api.start_play("https://example.com/v")["ok"] is False
