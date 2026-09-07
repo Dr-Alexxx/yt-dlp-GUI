@@ -1,15 +1,16 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import {
   NConfigProvider, NLayout, NLayoutSider, NLayoutContent,
   NMenu, NMessageProvider, NAlert, NButton, darkTheme, zhCN, dateZhCN,
 } from 'naive-ui'
 import TasksView from './views/TasksView.vue'
 import SettingsView from './views/SettingsView.vue'
+import PlayerView from './views/PlayerView.vue'
 import FfmpegBanner from './components/FfmpegBanner.vue'
 import PlaylistDialog from './components/PlaylistDialog.vue'
 import FormatDialog from './components/FormatDialog.vue'
-import { store, initStore } from './store'
+import { store, initStore, switchView } from './store'
 import { call } from './api'
 
 async function switchToNoCookie() {
@@ -18,6 +19,12 @@ async function switchToNoCookie() {
 }
 
 onMounted(initStore)
+
+const menuOptions = computed(() => [
+  { label: '下载', key: 'tasks', disabled: !!store.playerSession },
+  { label: '播放', key: 'player', disabled: !store.playerSession },
+  { label: '设置', key: 'settings', disabled: !!store.playerSession },
+])
 </script>
 
 <template>
@@ -26,9 +33,9 @@ onMounted(initStore)
       <n-layout style="height: 100vh" has-sider>
         <n-layout-sider :width="150">
           <n-menu
-            :value="store.view"
-            :options="[{ label: '下载', key: 'tasks' }, { label: '设置', key: 'settings' }]"
-            @update:value="(v) => (store.view = v)"
+            :value="store.playerSession ? 'player' : store.view"
+            :options="menuOptions"
+            @update:value="switchView"
           />
         </n-layout-sider>
         <n-layout-content content-style="padding: 16px">
@@ -43,7 +50,8 @@ onMounted(initStore)
           </n-alert>
           <FfmpegBanner />
           <TasksView v-if="store.view === 'tasks'" />
-          <SettingsView v-else />
+          <SettingsView v-else-if="store.view === 'settings'" />
+          <PlayerView v-if="store.view === 'player' || store.playerSession" />
         </n-layout-content>
       </n-layout>
       <PlaylistDialog />

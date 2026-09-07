@@ -16,6 +16,7 @@ export const store = reactive({
   uaString: '',
   audioOnlyHint: false,
   cookieFallback: false,
+  playerSession: null,
 })
 
 const AUDIO_EXT_RE = /\.(m4a|mp3|aac|opus|ogg|wav|flac)$/i
@@ -44,10 +45,33 @@ export async function initStore() {
       } else {
         store.ffmpegProgress = e.percent
       }
+    } else if (e.type === 'play_progress') {
+      if (store.playerSession && store.playerSession.id === e.session_id) {
+        store.playerSession.progress = e.percent
+      }
+    } else if (e.type === 'play_ready') {
+      if (store.playerSession && store.playerSession.id === e.session_id) {
+        store.playerSession.status = 'ready'
+        store.playerSession.port = e.port
+        store.playerSession.filename = e.filename
+      }
+    } else if (e.type === 'play_error') {
+      if (store.playerSession && store.playerSession.id === e.session_id) {
+        store.playerSession.status = 'error'
+        store.playerSession.error = e.error
+      }
     }
   }
   const r = await call('get_task_list')
   if (r.ok) store.tasks = r.tasks
   const f = await call('check_ffmpeg')
   store.ffmpegPath = f.path
+}
+
+export function switchView(v) {
+  if (store.playerSession) {
+    call('stop_play', store.playerSession.id)
+    store.playerSession = null
+  }
+  store.view = v
 }
