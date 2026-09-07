@@ -6,7 +6,7 @@ from pathlib import Path
 import urllib.request
 
 import backend.player as pl
-from backend.player import PlayerSession
+from backend.player import PlayerSession, PlayerManager
 from backend.config import Config, DEFAULTS
 from fakes import FakePlayYDL
 
@@ -124,3 +124,50 @@ def test_session_error_humanized(tmp_path):
     err = [e for e in events if e["type"] == "play_error"][0]["error"]
     assert "风控" in err
     s.stop()
+
+
+def make_manager(events, ffmpeg=True, monkeypatch=None):
+    import backend.player as pl
+    cfg = Config(path=Path(tempfile.gettempdir()) / "unused-cfg.json",
+                 defaults={**DEFAULTS})
+    if monkeypatch is not None:
+        monkeypatch.setattr(pl, "find_ffmpeg",
+                            (lambda c: "C:/ffmpeg/ffmpeg.exe") if ffmpeg
+                            else (lambda c: None))
+    return PlayerManager(cfg, events.append, ydl_factory=FakePlayYDL)
+
+
+def test_manager_start_and_single_session(tmp_path, monkeypatch):
+    events = []
+    m = make_manager(events, monkeypatch=monkeypatch)
+    r = m.start_play("https://example.com/v1")
+    assert r["ok"] is True
+    r2 = m.start_play("https://example.com/v2")
+    assert r2["ok"] is False
+    assert wait_until(lambda: any(e["type"] == "play_ready" for e in events))
+    sid = r["session_id"]
+    session_dir = Path(tempfile.gettempdir()) / "yt-dlp-gui-play" / sid
+    assert session_dir.exists()
+    assert m.stop_play(sid)["ok"] is True
+    assert wait_until(lambda: not session_dir.exists())
+    assert m.has_active() is False
+
+
+def test_manager_requires_ffmpeg(tmp_path, monkeypatch):
+    events = []
+    m = make_manager(events, ffmpeg=False, monkeypatch=monkeypatch)
+    r = m.start_play("https://example.com/v1")
+    assert r["ok"] is False
+    assert "FFmpeg" in r["error"]
+
+
+def test_manager_cleanup_all(tmp_path, monkeypatch):
+    import backend.player as pl
+    root = Path(tempfile.gettempdir()) / "yt-dlp-gui-play"
+    junk = root / "junk-session"
+    junk.mkdir(parents=True, exist_ok=True)
+    (junk / "left.mp4").write_bytes(b"x")
+    events = []
+    m = make_manager(events, monkeypatch=monkeypatch)
+    assert not junk.exists()
+    assert m.has_active() is False

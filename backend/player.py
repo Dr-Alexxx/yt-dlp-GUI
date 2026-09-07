@@ -163,3 +163,44 @@ class PlayerSession:
         if self._thread is not None and self._thread.is_alive():
             self._thread.join(timeout=5)
         shutil.rmtree(self.dir, ignore_errors=True)
+
+
+class PlayerManager:
+    def __init__(self, config: Config, push_event, ydl_factory=None):
+        self.config = config
+        self._push = push_event
+        self._ydl_factory = ydl_factory
+        self.play_root = Path(tempfile.gettempdir()) / "yt-dlp-gui-play"
+        self.sessions: dict[str, PlayerSession] = {}
+        self.cleanup_all()
+
+    def cleanup_all(self):
+        shutil.rmtree(self.play_root, ignore_errors=True)
+        self.sessions.clear()
+
+    def has_active(self) -> bool:
+        return bool(self.sessions)
+
+    def start_play(self, url: str, options: dict | None = None) -> dict:
+        if not find_ffmpeg(self.config):
+            return {"ok": False,
+                    "error": "FFmpeg 未就绪，无法在线播放。请在主界面横幅中先下载 FFmpeg。"}
+        if self.sessions:
+            return {"ok": False, "error": "已有播放会话进行中，请先关闭当前播放"}
+        sid = uuid.uuid4().hex[:12]
+        session = PlayerSession(sid, self.play_root / sid, self._push,
+                                ydl_factory=self._ydl_factory)
+        self.sessions[sid] = session
+        session.start(url, dict(options or {}), self.config)
+        return {"ok": True, "session_id": sid}
+
+    def stop_play(self, session_id: str) -> dict:
+        session = self.sessions.pop(session_id, None)
+        if session is None:
+            return {"ok": False, "error": "会话不存在"}
+        session.stop()
+        return {"ok": True}
+
+    def shutdown(self):
+        for sid in list(self.sessions):
+            self.stop_play(sid)
