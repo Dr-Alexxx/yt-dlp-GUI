@@ -10,6 +10,7 @@ import webview
 from backend.api import JsApi
 from backend.config import Config
 from backend.downloader import DownloadManager
+from backend.player import PlayerManager
 
 ROOT = Path(__file__).resolve().parent
 
@@ -48,20 +49,24 @@ def main():
     push = make_push(holder)
     config = Config()
     manager = DownloadManager(config, push)
-    api = JsApi(manager, config, push, dialog_holder=holder)
+    player = PlayerManager(config, push)
+    api = JsApi(manager, config, push, dialog_holder=holder, player_manager=player)
     window = webview.create_window("yt-dlp 下载器", url, js_api=api,
                                    width=1100, height=750)
     holder.window = window
 
     def on_closing():
-        if not manager.has_active():
+        if not manager.has_active() and not player.has_active():
             return True
         MB_YESNO, MB_ICONQUESTION, MB_TOPMOST = 0x4, 0x20, 0x40000
         IDYES = 6
         r = ctypes.windll.user32.MessageBoxW(
-            0, "有任务进行中，确定退出？", "yt-dlp 下载器",
+            0, "有任务/播放进行中，确定退出？", "yt-dlp-GUI",
             MB_YESNO | MB_ICONQUESTION | MB_TOPMOST)
-        return r == IDYES
+        if r == IDYES:
+            player.shutdown()
+            return True
+        return False
 
     window.events.closing += on_closing
     webview.start(debug=dev)
