@@ -101,3 +101,8 @@ class PlayerManager:        # 管理会话（当前设计允许同时只开一�
   - 接口契约：start_play 未装 FFmpeg 时返回 ok:false
 - **真实 yt-dlp 不进单测**：沿用 smoke 思路，手动冒烟
 - **前端**：按项目惯例不写自动化测试，构建 + 冒烟
+
+## 9. 实施期偏差记录
+
+- FFmpeg 门禁的前端表现：spec §7 写"按钮禁用 + tooltip"，实施为按钮始终可点、失败时 toast 提示（后端二次校验兜底）
+- play_progress 事件未实现 speed 字段（播放页进度仅显示百分比）

@@ -110,6 +110,7 @@ class PlayerSession:
         opts = {
             "outtmpl": str(self.dir / "%(title).40s [%(id)s].%(ext)s"),
             "format": "bestvideo*+bestaudio/best",
+            "merge_output_format": "mp4",
             "retries": 3,
             "quiet": True,
             "no_warnings": True,

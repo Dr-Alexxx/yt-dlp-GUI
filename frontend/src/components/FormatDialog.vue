@@ -44,7 +44,12 @@ async function start() {
 }
 
 async function play() {
-  const r = await call('start_play', store.probeResult.url, {})
+  const options = {}
+  if (store.customUa && store.uaString.trim()) {
+    options.custom_ua = true
+    options.ua_string = store.uaString.trim()
+  }
+  const r = await call('start_play', store.probeResult.url, options)
   store.probeResult = null
   if (!r.ok) {
     message.error(r.error)

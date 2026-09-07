@@ -28,7 +28,7 @@ async function close() {
     </div>
     <div v-else-if="s.status === 'ready'">
       <video
-        :src="`http://127.0.0.1:${s.port}/${s.filename}`"
+        :src="`http://127.0.0.1:${s.port}/${encodeURIComponent(s.filename)}`"
         controls autoplay
         style="width: 100%; max-height: 70vh; background: #000"
       />

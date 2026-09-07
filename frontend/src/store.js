@@ -69,7 +69,7 @@ export async function initStore() {
 }
 
 export function switchView(v) {
-  if (store.playerSession) {
+  if (v !== 'player' && store.playerSession) {
     call('stop_play', store.playerSession.id)
     store.playerSession = null
   }
