@@ -10,6 +10,9 @@ class FakeConfig:
     def set(self, key, value):
         self.data[key] = value
 
+    def get(self, key):
+        return self.data.get(key)
+
 
 class FakeManager:
     def __init__(self):
@@ -43,6 +46,26 @@ class FakeManager:
 def make_api():
     m, cfg = FakeManager(), FakeConfig()
     return JsApi(m, cfg, lambda e: None), m
+
+
+def test_probe_url_uses_cookies(tmp_path, monkeypatch):
+    seen_opts = []
+
+    class FakeYDL:
+        def __init__(self, opts):
+            seen_opts.append(opts)
+
+        def extract_info(self, url, download=False):
+            return {"title": "T", "duration": 1, "formats": []}
+
+    monkeypatch.setattr("backend.api.yt_dlp",
+                        SimpleNamespace(YoutubeDL=lambda opts: FakeYDL(opts)))
+    api, _ = make_api()
+    api.config.data["cookie_file"] = str(tmp_path / "c.txt")
+    api.config.data["cookie_file_format"] = "netscape"
+    r = api.probe_url("https://example.com/v")
+    assert r["ok"] is True
+    assert seen_opts[-1]["cookiefile"] == str(tmp_path / "c.txt")
 
 
 def test_add_task_rejects_invalid_url():

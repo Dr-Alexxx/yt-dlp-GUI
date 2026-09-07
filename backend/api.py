@@ -5,6 +5,7 @@ import threading
 import webview
 import yt_dlp
 
+from .cookies import resolve_cookie_file
 from .errors import humanize_error
 from .ffmpeg_mgr import download_ffmpeg, find_ffmpeg
 
@@ -117,6 +118,13 @@ class JsApi:
             return {"ok": False, "error": "无效的 URL"}
         opts = {"quiet": True, "no_warnings": True,
                 "skip_download": True, "noplaylist": True}
+        cookie_file = self.config.get("cookie_file")
+        if cookie_file:
+            opts["cookiefile"] = resolve_cookie_file(cookie_file,
+                                                     self.config.get("cookie_file_format") or "netscape",
+                                                     url)
+        elif self.config.get("cookies_browser"):
+            opts["cookiesfrombrowser"] = (self.config.get("cookies_browser"),)
         if ua:
             opts["http_headers"] = {"User-Agent": ua}
         try:
