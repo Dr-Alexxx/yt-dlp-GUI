@@ -1,4 +1,5 @@
 from collections import Counter
+from pathlib import Path
 
 import yt_dlp
 
@@ -49,3 +50,29 @@ class FakeYDL:
             if gate is not None:
                 gate.wait(timeout=5)
             hook({"status": "finished", "filename": "out.mp4"})
+
+
+class FakePlayYDL:
+    instances = []
+    fail_urls = set()
+
+    def __init__(self, opts):
+        self.opts = opts
+        FakePlayYDL.instances.append(self)
+
+    def extract_info(self, url, download=True):
+        if url in FakePlayYDL.fail_urls:
+            raise yt_dlp.utils.DownloadError(
+                "Fresh cookies (not necessarily logged in) are needed")
+        hooks = self.opts.get("progress_hooks", [])
+        for h in hooks:
+            h({"status": "downloading", "downloaded_bytes": 50,
+               "total_bytes": 100})
+        out = Path(self.opts["outtmpl"])
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fp = out.parent / "video.mp4"
+        fp.write_bytes(b"0123456789" * 10)
+        for h in hooks:
+            h({"status": "finished"})
+        return {"requested_downloads": [{"filepath": str(fp)}],
+                "title": "测试视频"}

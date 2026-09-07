@@ -1,9 +1,14 @@
 import threading
+import time
+import tempfile
 from pathlib import Path
 
 import urllib.request
 
 import backend.player as pl
+from backend.player import PlayerSession
+from backend.config import Config, DEFAULTS
+from fakes import FakePlayYDL
 
 
 def _serve(directory: Path):
@@ -68,3 +73,54 @@ def test_path_traversal_404(tmp_path):
         assert status == 404
     finally:
         server.shutdown()
+
+
+def wait_until(cond, timeout=5.0):
+    end = time.time() + timeout
+    while time.time() < end:
+        if cond():
+            return True
+        time.sleep(0.02)
+    return False
+
+
+def make_session(events, fail=False):
+    if fail:
+        FakePlayYDL.fail_urls.add("https://example.com/v1")
+    cfg = Config(path=Path(tempfile.gettempdir()) / "unused-cfg.json",
+                 defaults={**DEFAULTS})
+    s = PlayerSession("sess1", Path(tempfile.gettempdir()) / "play-test-sess1",
+                      events.append, ydl_factory=FakePlayYDL)
+    return s, cfg
+
+
+def test_session_lifecycle(tmp_path):
+    events = []
+    s, cfg = make_session(events)
+    s.start("https://example.com/v1", {}, cfg)
+    assert wait_until(lambda: any(e["type"] == "play_ready" for e in events))
+    assert (s.dir / "video.mp4").exists()
+    assert s.port and s.filename == "video.mp4"
+    s.stop()
+    assert wait_until(lambda: not s.dir.exists())
+    assert not any(e["type"] == "play_error" for e in events)
+
+
+def test_session_progress_events(tmp_path):
+    events = []
+    s, cfg = make_session(events)
+    s.start("https://example.com/v1", {}, cfg)
+    assert wait_until(lambda: any(e["type"] == "play_ready" for e in events))
+    progress = [e["percent"] for e in events if e["type"] == "play_progress"]
+    assert 50.0 in progress and 100.0 in progress
+    s.stop()
+
+
+def test_session_error_humanized(tmp_path):
+    events = []
+    s, cfg = make_session(events, fail=True)
+    s.start("https://example.com/v1", {}, cfg)
+    assert wait_until(lambda: any(e["type"] == "play_error" for e in events))
+    err = [e for e in events if e["type"] == "play_error"][0]["error"]
+    assert "风控" in err
+    s.stop()
