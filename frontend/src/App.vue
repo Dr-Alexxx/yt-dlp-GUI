@@ -8,6 +8,7 @@ import TasksView from './views/TasksView.vue'
 import SettingsView from './views/SettingsView.vue'
 import PlayerView from './views/PlayerView.vue'
 import FfmpegBanner from './components/FfmpegBanner.vue'
+import RuntimeStatusBar from './components/RuntimeStatusBar.vue'
 import PlaylistDialog from './components/PlaylistDialog.vue'
 import FormatDialog from './components/FormatDialog.vue'
 import { store, initStore, switchView } from './store'
@@ -48,6 +49,7 @@ const menuOptions = computed(() => [
               切换为不使用 Cookie
             </n-button>
           </n-alert>
+          <RuntimeStatusBar />
           <FfmpegBanner />
           <TasksView v-if="store.view === 'tasks'" />
           <SettingsView v-else-if="store.view === 'settings'" />

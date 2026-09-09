@@ -1,7 +1,7 @@
 <script setup>
 import { h, ref } from 'vue'
 import {
-  NButton, NInput, NProgress, NSwitch, NTag, NDataTable, useMessage,
+  NButton, NInput, NProgress, NSwitch, NTag, NDataTable, NCollapse, NCollapseItem, useMessage,
 } from 'naive-ui'
 import { call } from '../api'
 import { store } from '../store'
@@ -83,23 +83,30 @@ async function probe() {
 
 <template>
   <div>
-    <div style="display: flex; gap: 12px; margin-bottom: 6px; align-items: center">
+    <div style="display: flex; gap: 12px; margin-bottom: 6px; align-items: center; flex-wrap: wrap">
       <span>批量</span>
       <n-switch v-model:value="batchMode" size="small" />
       <span>仅音频 (MP3)</span>
       <n-switch v-model:value="store.audioOnly" size="small" />
       <span>字幕</span>
       <n-switch v-model:value="store.wantSubtitles" size="small" />
-      <n-input
-        v-if="store.wantSubtitles" v-model:value="store.subtitleLangs"
-        size="small" style="width: 220px"
-        placeholder="语言，如 zh-CN,en；留空=默认字幕" />
-      <span>自定义 UA</span>
-      <n-switch v-model:value="store.customUa" size="small" />
     </div>
-    <n-input
-      v-if="store.customUa" v-model:value="store.uaString" size="small"
-      style="margin-bottom: 6px" placeholder="粘贴目标网站的 User-Agent（网站页面 F12 控制台输入 navigator.userAgent 回车）" />
+    <n-collapse style="margin-bottom: 8px">
+      <n-collapse-item title="更多下载选项" name="advanced-download-options">
+        <n-input
+          v-if="store.wantSubtitles" v-model:value="store.subtitleLangs"
+          size="small" style="margin-bottom: 8px"
+          placeholder="字幕语言，如 zh-CN,en；留空=默认字幕" />
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+          <span>自定义 UA</span>
+          <n-switch v-model:value="store.customUa" size="small" />
+          <n-input
+            v-if="store.customUa" v-model:value="store.uaString" size="small"
+            style="min-width: 320px; flex: 1"
+            placeholder="粘贴目标网站的 User-Agent（网站页面 F12 控制台输入 navigator.userAgent 回车）" />
+        </div>
+      </n-collapse-item>
+    </n-collapse>
     <n-input
       v-if="!batchMode" v-model:value="url" type="text"
       placeholder="粘贴视频链接" @keyup.enter="add" />

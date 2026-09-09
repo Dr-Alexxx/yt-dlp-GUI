@@ -17,6 +17,7 @@ export const store = reactive({
   audioOnlyHint: false,
   cookieFallback: false,
   playerSession: null,
+  runtimeStatus: null,
 })
 
 const AUDIO_EXT_RE = /\.(m4a|mp3|aac|opus|ogg|wav|flac)$/i
@@ -41,7 +42,10 @@ export async function initStore() {
         store.ffmpegError = e.error
       } else if (e.percent >= 100) {
         store.ffmpegProgress = null
-        call('check_ffmpeg').then((r) => { store.ffmpegPath = r.path })
+        call('check_ffmpeg').then(async (r) => {
+          store.ffmpegPath = r.path
+          await refreshRuntimeStatus()
+        })
       } else {
         store.ffmpegProgress = e.percent
       }
@@ -66,6 +70,12 @@ export async function initStore() {
   if (r.ok) store.tasks = r.tasks
   const f = await call('check_ffmpeg')
   store.ffmpegPath = f.path
+  await refreshRuntimeStatus()
+}
+
+export async function refreshRuntimeStatus() {
+  const r = await call('get_runtime_status')
+  if (r.ok) store.runtimeStatus = r
 }
 
 export function switchView(v) {
