@@ -203,3 +203,29 @@ def test_play_forwarding():
     assert api.start_play("bad")["ok"] is False
     api.player = None
     assert api.start_play("https://example.com/v")["ok"] is False
+
+
+def test_runtime_status_without_cookie_or_ffmpeg(monkeypatch):
+    import backend.api as api_mod
+    monkeypatch.setattr(api_mod, "find_ffmpeg", lambda cfg: None)
+    api, _ = make_api()
+    r = api.get_runtime_status()
+    assert r["ok"] is True
+    assert r["ffmpeg"] == {"ready": False, "path": None}
+    assert r["cookie"] == {"configured": False, "source": "none", "format": None}
+    assert isinstance(r["yt_dlp_version"], str) and r["yt_dlp_version"]
+
+
+def test_runtime_status_reports_cookie_source_without_path(monkeypatch):
+    import backend.api as api_mod
+    monkeypatch.setattr(api_mod, "find_ffmpeg", lambda cfg: "C:/ffmpeg/ffmpeg.exe")
+    api, _ = make_api()
+    api.config.data.update({
+        "cookie_file": "C:/secret/cookies.txt",
+        "cookie_file_format": "json",
+        "cookies_browser": "edge",
+    })
+    r = api.get_runtime_status()
+    assert r["ffmpeg"] == {"ready": True, "path": "C:/ffmpeg/ffmpeg.exe"}
+    assert r["cookie"] == {"configured": True, "source": "file", "format": "json"}
+    assert "secret" not in repr(r)

@@ -4,6 +4,7 @@ import threading
 
 import webview
 import yt_dlp
+from yt_dlp.version import __version__ as YT_DLP_VERSION
 
 from .cookies import resolve_cookie_file
 from .errors import humanize_error
@@ -151,6 +152,27 @@ class JsApi:
 
     def check_ffmpeg(self):
         return {"ok": True, "path": find_ffmpeg(self.config)}
+
+    def get_runtime_status(self):
+        ffmpeg = find_ffmpeg(self.config)
+        cookie_file = self.config.get("cookie_file")
+        cookies_browser = self.config.get("cookies_browser")
+        if cookie_file:
+            cookie = {
+                "configured": True,
+                "source": "file",
+                "format": self.config.get("cookie_file_format") or "netscape",
+            }
+        elif cookies_browser:
+            cookie = {"configured": True, "source": "browser", "format": None}
+        else:
+            cookie = {"configured": False, "source": "none", "format": None}
+        return {
+            "ok": True,
+            "ffmpeg": {"ready": bool(ffmpeg), "path": ffmpeg},
+            "cookie": cookie,
+            "yt_dlp_version": YT_DLP_VERSION,
+        }
 
     def download_ffmpeg(self):
         def work():
