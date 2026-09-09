@@ -106,14 +106,20 @@ class JsApi:
         path, error = self._completed_filepath(task_id)
         if error:
             return {"ok": False, "error": error}
-        os.startfile(str(path))
+        try:
+            os.startfile(str(path))
+        except OSError as e:
+            return {"ok": False, "error": f"打开文件失败：{e}"}
         return {"ok": True}
 
     def open_task_directory(self, task_id):
         path, error = self._completed_filepath(task_id)
         if error:
             return {"ok": False, "error": error}
-        os.startfile(str(path.parent))
+        try:
+            os.startfile(str(path.parent))
+        except OSError as e:
+            return {"ok": False, "error": f"打开目录失败：{e}"}
         return {"ok": True}
 
     def pause_task(self, task_id):

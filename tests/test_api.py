@@ -247,13 +247,25 @@ def test_completed_task_file_actions(monkeypatch, tmp_path):
     file_path.write_bytes(b"x")
     api, manager = make_api()
     manager.tasks["done"] = type("Task", (), {"status": "done", "filepath": str(file_path)})()
+    manager.tasks["enum_done"] = type(
+        "Task", (), {"status": type("Status", (), {"value": "done"})(), "filepath": str(file_path)}
+    )()
     manager.tasks["pending"] = type("Task", (), {"status": "downloading", "filepath": str(file_path)})()
     calls = []
     monkeypatch.setattr(api_mod.os, "startfile", lambda path: calls.append(path), raising=False)
 
     assert api.get_task_filepath("done") == {"ok": True, "path": str(file_path)}
+    assert api.get_task_filepath("enum_done") == {"ok": True, "path": str(file_path)}
     assert api.open_task_file("done") == {"ok": True}
     assert api.open_task_directory("done") == {"ok": True}
     assert calls == [str(file_path), str(tmp_path)]
-    assert api.open_task_file("pending")["ok"] is False
-    assert api.open_task_file("missing")["ok"] is False
+    assert api.open_task_file("pending") == {"ok": False, "error": "任务尚未完成"}
+    assert api.open_task_file("missing") == {"ok": False, "error": "任务不存在"}
+
+    def failing_startfile(path):
+        raise OSError("blocked")
+
+    monkeypatch.setattr(api_mod.os, "startfile", failing_startfile, raising=False)
+    result = api.open_task_file("done")
+    assert result["ok"] is False
+    assert "打开文件失败" in result["error"]
