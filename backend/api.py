@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import threading
+from pathlib import Path
 
 import webview
 import yt_dlp
@@ -82,6 +84,37 @@ class JsApi:
 
     def get_task_list(self):
         return {"ok": True, "tasks": self.manager.get_task_list()}
+
+    def _completed_filepath(self, task_id):
+        task = self.manager.tasks.get(task_id)
+        if task is None:
+            return None, "任务不存在"
+        status = getattr(task.status, "value", task.status)
+        filepath = getattr(task, "filepath", "")
+        if status != "done" or not filepath:
+            return None, "任务尚未完成"
+        path = Path(filepath)
+        if not path.is_file():
+            return None, "下载文件不存在或已被移动"
+        return path, None
+
+    def get_task_filepath(self, task_id):
+        path, error = self._completed_filepath(task_id)
+        return {"ok": False, "error": error} if error else {"ok": True, "path": str(path)}
+
+    def open_task_file(self, task_id):
+        path, error = self._completed_filepath(task_id)
+        if error:
+            return {"ok": False, "error": error}
+        os.startfile(str(path))
+        return {"ok": True}
+
+    def open_task_directory(self, task_id):
+        path, error = self._completed_filepath(task_id)
+        if error:
+            return {"ok": False, "error": error}
+        os.startfile(str(path.parent))
+        return {"ok": True}
 
     def pause_task(self, task_id):
         if task_id not in self.manager.tasks:

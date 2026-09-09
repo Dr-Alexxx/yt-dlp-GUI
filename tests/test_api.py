@@ -238,3 +238,22 @@ def test_runtime_status_reports_browser_cookie(monkeypatch):
     api.config.data["cookies_browser"] = "edge"
     r = api.get_runtime_status()
     assert r["cookie"] == {"configured": True, "source": "browser", "format": None}
+
+
+def test_completed_task_file_actions(monkeypatch, tmp_path):
+    import backend.api as api_mod
+
+    file_path = tmp_path / "video.mp4"
+    file_path.write_bytes(b"x")
+    api, manager = make_api()
+    manager.tasks["done"] = type("Task", (), {"status": "done", "filepath": str(file_path)})()
+    manager.tasks["pending"] = type("Task", (), {"status": "downloading", "filepath": str(file_path)})()
+    calls = []
+    monkeypatch.setattr(api_mod.os, "startfile", lambda path: calls.append(path), raising=False)
+
+    assert api.get_task_filepath("done") == {"ok": True, "path": str(file_path)}
+    assert api.open_task_file("done") == {"ok": True}
+    assert api.open_task_directory("done") == {"ok": True}
+    assert calls == [str(file_path), str(tmp_path)]
+    assert api.open_task_file("pending")["ok"] is False
+    assert api.open_task_file("missing")["ok"] is False
