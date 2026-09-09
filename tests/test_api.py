@@ -229,3 +229,12 @@ def test_runtime_status_reports_cookie_source_without_path(monkeypatch):
     assert r["ffmpeg"] == {"ready": True, "path": "C:/ffmpeg/ffmpeg.exe"}
     assert r["cookie"] == {"configured": True, "source": "file", "format": "json"}
     assert "secret" not in repr(r)
+
+
+def test_runtime_status_reports_browser_cookie(monkeypatch):
+    import backend.api as api_mod
+    monkeypatch.setattr(api_mod, "find_ffmpeg", lambda cfg: None)
+    api, _ = make_api()
+    api.config.data["cookies_browser"] = "edge"
+    r = api.get_runtime_status()
+    assert r["cookie"] == {"configured": True, "source": "browser", "format": None}
