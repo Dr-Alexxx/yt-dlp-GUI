@@ -96,7 +96,19 @@ async function start() {
   const options = {}
   if (format) options.format = format
   if (store.audioOnly) options.audio_only = true
-  await call('add_task', store.probeResult.url, options)
+  if (store.wantSubtitles) {
+    options.subtitles = true
+    if (store.subtitleLangs.trim()) options.subtitle_langs = store.subtitleLangs.trim()
+  }
+  if (store.customUa && store.uaString.trim()) {
+    options.custom_ua = true
+    options.ua_string = store.uaString.trim()
+  }
+  const r = await call('add_task', store.probeResult.url, options)
+  if (!r.ok) {
+    message.error(r.error)
+    return
+  }
   store.probeResult = null
 }
 

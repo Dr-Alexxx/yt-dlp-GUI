@@ -11,11 +11,12 @@ import FfmpegBanner from './components/FfmpegBanner.vue'
 import RuntimeStatusBar from './components/RuntimeStatusBar.vue'
 import PlaylistDialog from './components/PlaylistDialog.vue'
 import FormatDialog from './components/FormatDialog.vue'
-import { store, initStore, switchView } from './store'
+import { store, initStore, switchView, refreshRuntimeStatus } from './store'
 import { call } from './api'
 
 async function switchToNoCookie() {
-  await call('save_config', { cookies_browser: '' })
+  const r = await call('save_config', { cookies_browser: '' })
+  if (r.ok) await refreshRuntimeStatus()
   store.cookieFallback = false
 }
 

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { NButton, NCollapse, NCollapseItem, NForm, NFormItem, NInput, NInputNumber, NSelect, useMessage } from 'naive-ui'
 import { call } from '../api'
+import { refreshRuntimeStatus } from '../store'
 
 const message = useMessage()
 const form = ref({
@@ -47,7 +48,8 @@ onMounted(async () => {
 })
 
 async function save() {
-  await call('save_config', { ...form.value, max_concurrent: Number(form.value.max_concurrent) })
+  const r = await call('save_config', { ...form.value, max_concurrent: Number(form.value.max_concurrent) })
+  if (r.ok) await refreshRuntimeStatus()
   message.success('已保存')
 }
 </script>

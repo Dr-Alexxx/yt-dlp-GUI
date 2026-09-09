@@ -35,6 +35,15 @@ async function copyPath(row) {
   }
 }
 
+async function copyError() {
+  try {
+    await navigator.clipboard.writeText(activeError.value?.error || '')
+    message.success('错误已复制')
+  } catch {
+    message.error('复制失败，请手动复制错误信息')
+  }
+}
+
 function openSettings() {
   activeError.value = null
   store.view = 'settings'
@@ -168,6 +177,7 @@ async function probe() {
       <template #footer>
         <n-button @click="retryFromError">重新下载</n-button>
         <n-button style="margin-left: 8px" @click="openSettings">打开设置</n-button>
+        <n-button style="margin-left: 8px" @click="copyError">复制错误</n-button>
         <n-button style="margin-left: 8px" @click="activeError = null">关闭</n-button>
       </template>
     </n-modal>
