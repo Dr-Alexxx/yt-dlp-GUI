@@ -1,7 +1,7 @@
 <script setup>
 import { h, ref } from 'vue'
 import {
-  NButton, NInput, NProgress, NSwitch, NTag, NDataTable, NCollapse, NCollapseItem, useMessage,
+  NButton, NInput, NProgress, NSwitch, NTag, NDataTable, NCollapse, NCollapseItem, NModal, useMessage,
 } from 'naive-ui'
 import { call } from '../api'
 import { store } from '../store'
@@ -10,6 +10,41 @@ const message = useMessage()
 const url = ref('')
 const batchMode = ref(false)
 const batchText = ref('')
+const activeError = ref(null)
+
+function showError(row) {
+  activeError.value = row
+}
+
+async function invoke(row, method) {
+  const r = await call(method, row.id)
+  if (!r.ok) message.error(r.error)
+}
+
+async function copyPath(row) {
+  const r = await call('get_task_filepath', row.id)
+  if (!r.ok) {
+    message.error(r.error)
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(r.path)
+    message.success('路径已复制')
+  } catch {
+    message.error('复制失败，请使用“打开目录”定位文件')
+  }
+}
+
+function openSettings() {
+  activeError.value = null
+  store.view = 'settings'
+}
+
+async function retryFromError() {
+  const row = activeError.value
+  activeError.value = null
+  if (row) await invoke(row, 'retry_task')
+}
 
 const statusMap = {
   queued: '排队中', probing: '解析中', waiting: '等待选择',
@@ -22,13 +57,20 @@ function tagType(s) {
 
 function actions(row) {
   const btns = []
-  const add = (label, method) => btns.push(
+  const add = (label, method, onClick = () => call(method, row.id)) => btns.push(
     h(NButton, { size: 'tiny', style: 'margin-right: 6px',
-                 onClick: () => call(method, row.id) }, { default: () => label }))
+                  onClick }, { default: () => label }))
+  if (row.status === 'done') {
+    add('打开文件', 'open_task_file', () => invoke(row, 'open_task_file'))
+    add('打开目录', 'open_task_directory', () => invoke(row, 'open_task_directory'))
+    btns.push(h(NButton, { size: 'tiny', onClick: () => copyPath(row) }, { default: () => '复制路径' }))
+    return btns
+  }
   if (row.status === 'downloading' || row.status === 'waiting') add('暂停', 'pause_task')
   if (row.status === 'cancelled') add('继续', 'resume_task')
   if (row.status === 'error' || row.status === 'cancelled') add('重试', 'retry_task')
   if (!['done', 'cancelled', 'error'].includes(row.status)) add('取消', 'cancel_task')
+  if (row.status === 'error') btns.push(h(NButton, { size: 'tiny', onClick: () => showError(row) }, { default: () => '查看原因' }))
   return btns
 }
 
@@ -118,5 +160,16 @@ async function probe() {
     </n-button>
     <n-button style="margin: 8px 0 16px" @click="probe">解析格式…</n-button>
     <n-data-table :columns="columns" :data="store.tasks" size="small" />
+    <n-modal
+      :show="!!activeError" preset="card" title="下载失败"
+      style="width: 620px" @close="activeError = null" @mask-click="activeError = null"
+    >
+      <div style="white-space: pre-wrap; word-break: break-word">{{ activeError?.error }}</div>
+      <template #footer>
+        <n-button @click="retryFromError">重新下载</n-button>
+        <n-button style="margin-left: 8px" @click="openSettings">打开设置</n-button>
+        <n-button style="margin-left: 8px" @click="activeError = null">关闭</n-button>
+      </template>
+    </n-modal>
   </div>
 </template>
