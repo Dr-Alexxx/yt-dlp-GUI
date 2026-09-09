@@ -13,7 +13,9 @@
 - **Cookie 支持**：Netscape `cookies.txt` 或 JSON 格式均可，设置页可弹出文件选择器（B 站 1080P 等登录画质需要）
 - **字幕下载**：下载页按任务勾选，可指定语言（如 `zh-CN,en`）
 - **内置 FFmpeg 管理**：首次使用时自动下载到应用目录的 `bin\`，不污染系统环境
+- **运行环境状态**：主页显示 FFmpeg、Cookie 和内置 yt-dlp 版本状态
 - **下载历史**：任务记录持久化，重启后可查看和重试
+- **任务快捷操作**：下载完成后可打开文件、打开目录、复制路径；失败任务可查看原因并快速重试或打开设置
 - **退出保护**：有任务/播放进行中时关闭窗口会弹确认
 - **风控友好**：自定义 UA、Cookie 被锁自动降级、抖音风控自动重试、常见错误中文提示
 
@@ -96,7 +98,7 @@ FFmpeg 未就绪，无法合并视频+音频流。点横幅下载 FFmpeg 后重�
 │  ├─ models.py        # Task 状态机
 │  └─ config.py        # 配置与任务历史持久化（%APPDATA%\yt-dlp-gui）
 ├─ frontend/           # Vue 3 + Naive UI（Vite 构建）
-├─ tests/              # pytest（70 个用例）
+├─ tests/              # pytest（74 个用例）
 ├─ smoke.py            # 无 GUI 全链路冒烟：python smoke.py [url]
 └─ build.ps1           # 一键打包脚本
 ```
